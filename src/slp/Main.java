@@ -1,7 +1,9 @@
 package slp;
 
 import java.io.FileWriter;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 import control.Control;
 import slp.Slp.Exp;
@@ -12,7 +14,6 @@ import slp.Slp.Exp.Op;
 import slp.Slp.ExpList;
 import slp.Slp.Stm;
 import util.Bug;
-import util.Todo;
 
 public class Main
 {
@@ -30,8 +31,9 @@ public class Main
       int n1 = maxArgsStm(e.stm);
       int n2 = maxArgsExp(e.exp);
       return n1 >= n2 ? n1 : n2;
-    } else 
+    } else  {
       new Bug();
+    }
     return 0;
   }
   
@@ -43,8 +45,9 @@ public class Main
     } else if (expList instanceof ExpList.Last) {
       ExpList.Last el = (ExpList.Last) expList;
       return maxArgsExp(el.exp);
-    } else 
+    } else  {
       new Bug();
+    }
     return 0;
   } 
 
@@ -54,7 +57,6 @@ public class Main
       Stm.Compound s = (Stm.Compound) stm;
       int n1 = maxArgsStm(s.s1);
       int n2 = maxArgsStm(s.s2);
-
       return n1 >= n2 ? n1 : n2;
     } else if (stm instanceof Stm.Assign) {
       Stm.Assign s = (Stm.Assign) stm; 
@@ -62,29 +64,84 @@ public class Main
     } else if (stm instanceof Stm.Print) {
       Stm.Print s = (Stm.Print) stm; 
       return maxArgsExpList(s.explist);
-    } else
+    } else {
       new Bug();
+    }
     return 0;
   }
 
   // ////////////////////////////////////////
   // interpreter
+  private Map<String,Integer> mIdValue;
 
-  private void interpExp(Exp.T exp)
+  private int interpExp(Exp.T exp)
   {
-    new Todo();
+    if (exp instanceof Exp.Id) {
+        Exp.Id e = (Exp.Id) exp;
+        return mIdValue.get(e.id);
+    } else if (exp instanceof Exp.Num) {
+        Exp.Num e = (Exp.Num) exp;
+        return e.num;
+    } else if (exp instanceof Exp.Op) {
+        Exp.Op e = (Exp.Op) exp;
+        int ret = 0;
+        switch(e.op) {
+          case ADD:
+              ret = interpExp(e.left) + interpExp(e.right);
+            break;
+          case SUB:
+              ret = interpExp(e.left) - interpExp(e.right);
+            break;
+          case TIMES:
+              ret = interpExp(e.left) * interpExp(e.right);
+            break;
+          case DIVIDE:
+              ret = interpExp(e.left) / interpExp(e.right);
+            break;
+          default:
+            new Bug();
+            break;
+        }
+        return ret;
+    } else if (exp instanceof Exp.Eseq) {
+        Exp.Eseq e = (Exp.Eseq) exp;
+        interpStm(e.stm);
+        return interpExp(e.exp);
+    } else  {
+      new Bug();
+    }
+    return 0;
+  }
+
+  private void printExpList(ExpList.T expList)
+  {
+    if (expList instanceof ExpList.Pair) {
+      ExpList.Pair el = (ExpList.Pair) expList;
+      System.out.print(interpExp(el.exp) + " ");
+      printExpList(el.list);
+    } else if (expList instanceof ExpList.Last) {
+      ExpList.Last el = (ExpList.Last) expList;
+      System.out.println(interpExp(el.exp));
+    } else  {
+      new Bug();
+    }
   }
 
   private void interpStm(Stm.T prog)
   {
     if (prog instanceof Stm.Compound) {
-      new Todo();
+      Stm.Compound s = (Stm.Compound) prog;
+      interpStm(s.s1);
+      interpStm(s.s2);
     } else if (prog instanceof Stm.Assign) {
-      new Todo();
+      Stm.Assign s = (Stm.Assign) prog; 
+      mIdValue.put(s.id, interpExp(s.exp));
     } else if (prog instanceof Stm.Print) {
-      new Todo();
-    } else
+      Stm.Print s = (Stm.Print) prog; 
+      printExpList(s.explist);
+    } else {
       new Bug();
+    }
   }
 
   // ////////////////////////////////////////
@@ -158,8 +215,9 @@ public class Main
 
       compileStm(stm);
       compileExp(ee);
-    } else
+    } else {
       new Bug();
+    }
   }
 
   private void compileExpList(ExpList.T explist)
@@ -184,8 +242,9 @@ public class Main
       emit("\tpushl\t$slp_format\n");
       emit("\tcall\tprintf\n");
       emit("\taddl\t$4, %esp\n");
-    } else
+    } else {
       new Bug();
+    }
   }
 
   private void compileStm(Stm.T prog)
@@ -213,8 +272,9 @@ public class Main
       emit("\tpushl\t$newline\n");
       emit("\tcall\tprintf\n");
       emit("\taddl\t$4, %esp\n");
-    } else
+    } else {
       new Bug();
+    }
   }
 
   // ////////////////////////////////////////
@@ -228,6 +288,7 @@ public class Main
 
     // interpret a given program
     if (Control.ConSlp.action == Control.ConSlp.T.INTERP) {
+      mIdValue = new HashMap<String, Integer>();
       interpStm(prog);
     }
 
