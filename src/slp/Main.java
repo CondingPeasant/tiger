@@ -85,18 +85,22 @@ public class Main
     } else if (exp instanceof Exp.Op) {
         Exp.Op e = (Exp.Op) exp;
         int ret = 0;
+        int leftResult = interpExp(e.left);
+        int rightResult = interpExp(e.right);
         switch(e.op) {
           case ADD:
-              ret = interpExp(e.left) + interpExp(e.right);
+              ret = leftResult + rightResult;
             break;
           case SUB:
-              ret = interpExp(e.left) - interpExp(e.right);
+              ret = leftResult - rightResult;
             break;
           case TIMES:
-              ret = interpExp(e.left) * interpExp(e.right);
+              ret = leftResult * rightResult;
             break;
           case DIVIDE:
-              ret = interpExp(e.left) / interpExp(e.right);
+            if (0 == rightResult)
+              throw new ArithmeticException();
+            ret = leftResult / rightResult;
             break;
           default:
             new Bug();
@@ -199,11 +203,14 @@ public class Main
         compileExp(left);
         emit("\tpushl\t%eax\n");
         compileExp(right);
+        emit("\tcmpl\t$0, %eax\n");
+        emit("\tje\t\texit\n");
         emit("\tpopl\t%edx\n");
         emit("\tmovl\t%eax, %ecx\n");
         emit("\tmovl\t%edx, %eax\n");
         emit("\tcltd\n");
         emit("\tdiv\t%ecx\n");
+        emit("exit:\n");
         break;
       default:
         new Bug();
