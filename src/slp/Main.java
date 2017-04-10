@@ -1,9 +1,9 @@
 package slp;
 
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.util.HashSet;
 
+import control.Control;
 import slp.Slp.Exp;
 import slp.Slp.Exp.Eseq;
 import slp.Slp.Exp.Id;
@@ -13,7 +13,6 @@ import slp.Slp.ExpList;
 import slp.Slp.Stm;
 import util.Bug;
 import util.Todo;
-import control.Control;
 
 public class Main
 {
@@ -22,9 +21,32 @@ public class Main
 
   private int maxArgsExp(Exp.T exp)
   {
-    new Todo();
-    return -1;
+    if (exp instanceof Exp.Id
+        || exp instanceof Exp.Num
+        || exp instanceof Exp.Op) {
+      return 1;
+    } else if (exp instanceof Exp.Eseq) {
+      Exp.Eseq e = (Exp.Eseq) exp;
+      int n1 = maxArgsStm(e.stm);
+      int n2 = maxArgsExp(e.exp);
+      return n1 >= n2 ? n1 : n2;
+    } else 
+      new Bug();
+    return 0;
   }
+  
+  private int maxArgsExpList(ExpList.T expList)
+  {
+    if (expList instanceof ExpList.Pair) {
+      ExpList.Pair el = (ExpList.Pair) expList;
+      return maxArgsExpList(el.list) + 1;
+    } else if (expList instanceof ExpList.Last) {
+      ExpList.Last el = (ExpList.Last) expList;
+      return maxArgsExp(el.exp);
+    } else 
+      new Bug();
+    return 0;
+  } 
 
   private int maxArgsStm(Stm.T stm)
   {
@@ -35,11 +57,11 @@ public class Main
 
       return n1 >= n2 ? n1 : n2;
     } else if (stm instanceof Stm.Assign) {
-      new Todo();
-      return -1;
+      Stm.Assign s = (Stm.Assign) stm; 
+      return maxArgsExp(s.exp);
     } else if (stm instanceof Stm.Print) {
-      new Todo();
-      return -1;
+      Stm.Print s = (Stm.Print) stm; 
+      return maxArgsExpList(s.explist);
     } else
       new Bug();
     return 0;
