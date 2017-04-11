@@ -204,13 +204,12 @@ public class Main
         emit("\tpushl\t%eax\n");
         compileExp(right);
         emit("\tcmpl\t$0, %eax\n");
-        emit("\tje\t\texit\n");
+        emit("\tje\t\texception\n");
         emit("\tpopl\t%edx\n");
         emit("\tmovl\t%eax, %ecx\n");
         emit("\tmovl\t%edx, %eax\n");
         emit("\tcltd\n");
         emit("\tdiv\t%ecx\n");
-        emit("exit:\n");
         break;
       default:
         new Bug();
@@ -315,6 +314,8 @@ public class Main
         writer.write("\t.string \"%d \"\n");
         writer.write("newline:\n");
         writer.write("\t.string \"\\n\"\n");
+        writer.write("exception_msg:\n");
+        writer.write("\t.string \"Exception occurs!\\n\"\n");
         for (String s : this.ids) {
           writer.write(s + ":\n");
           writer.write("\t.int 0\n");
@@ -325,6 +326,12 @@ public class Main
         writer.write("\tpushl\t%ebp\n");
         writer.write("\tmovl\t%esp, %ebp\n");
         writer.write(buf.toString());
+        writer.write("\tjp\texit\n");
+        writer.write("exception:\n");
+        writer.write("\tpushl\t$exception_msg\n");
+        writer.write("\tcall\tprintf\n");
+        writer.write("\taddl\t$4, %esp\n");
+        writer.write("exit:\n");
         writer.write("\tleave\n\tret\n\n");
         writer.close();
         Process child = Runtime.getRuntime().exec("gcc -m32 slp_gen.s");
