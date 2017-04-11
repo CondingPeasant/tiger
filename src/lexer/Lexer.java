@@ -12,6 +12,7 @@ public class Lexer
   InputStream fstream; // input stream for the above file
   int curLineNum;
   int lDelimiterNum;
+  boolean isAfterDoubleSlash;
 
   public Lexer(String fname, InputStream fstream)
   {
@@ -19,6 +20,7 @@ public class Lexer
     this.fstream = fstream;
     curLineNum = 1;
     lDelimiterNum = 0;
+    isAfterDoubleSlash = false;
   }
 
   // Discard all the characters going after "//" till end of the line.
@@ -28,11 +30,25 @@ public class Lexer
       c = this.fstream.read();
     } while ('\n' != c);
     curLineNum++;
+    isAfterDoubleSlash = false;
   }
 
   // Discard all the characters between "/*" and "*/".
   // Delemiters can be nested.
-  private void dealWithDelimiter() {
+  private Token dealWithDelimiter() {
+    Token token = null;
+    // omit all tokens except "/*", "*/" and EOF
+    do {
+      try {
+        token = nextTokenInternal();
+      } catch (Exception e) {
+        token = null;
+      }
+    } while (null == token || 
+            (Kind.TOKEN_LDELIMITER != token.kind 
+            && Kind.TOKEN_RDELIMITER != token.kind
+            && Kind.TOKEN_EOF != token.kind));
+    return token;
   }
 
   // When called, return the next token (refer to the code "Token.java")
@@ -104,11 +120,9 @@ public class Lexer
     case '/':
       c = this.fstream.read();
       if ('/' == c) {
-        Token token = new Token(Kind.TOKEN_DOUBLE_SLASH, curLineNum);
-        dealWithDoubleSlash();
-        return token;
+        return new Token(Kind.TOKEN_DOUBLE_SLASH, curLineNum);
       } else if ('*' == c) {
-        Token token = new Token(Kind.TOKEN_RDELIMITER, curLineNum);
+        return new Token(Kind.TOKEN_LDELIMITER, curLineNum);
       } else {
         throw new Exception("After '/' is " + (char)c + ", at line" + curLineNum);
       }
@@ -201,12 +215,36 @@ public class Lexer
   {
     Token t = null;
 
-    try {
-      t = this.nextTokenInternal();
-    } catch (Exception e) {
-      e.printStackTrace();
-      System.exit(1);
+    if (isAfterDoubleSlash) {
+      try {
+        dealWithDoubleSlash();
+      } catch (Exception e) {
+        e.printStackTrace();
+        System.exit(1);
+      }
     }
+
+    if (lDelimiterNum > 0) {
+      t = dealWithDelimiter();
+    } else {
+      try {
+        t = this.nextTokenInternal();
+      } catch (Exception e) {
+        e.printStackTrace();
+        System.exit(1);
+      }
+    }
+
+    if (Kind.TOKEN_LDELIMITER == t.kind) {
+      lDelimiterNum++;
+      System.out.println("Current left delimiter number = " + lDelimiterNum);
+    } else if (Kind.TOKEN_RDELIMITER == t.kind) {
+      lDelimiterNum--;
+      System.out.println("Current left delimiter number = " + lDelimiterNum);
+    } else if (Kind.TOKEN_DOUBLE_SLASH == t.kind) {
+      isAfterDoubleSlash = true;
+    }
+
     if (dump)
       System.out.println(t.toString());
     return t;

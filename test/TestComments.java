@@ -17,6 +17,8 @@ class Fac { // // after statement
         if (num < 1)
             num_aux = 1;
         else
+        /* test illegal character in delimiters. & ^ # */
+        /* test illegal id in delimiters. 99u */
             num_aux = num * (this.ComputeFac(num-1));
         return num_aux;
     }
