@@ -54,6 +54,10 @@ public class Token
     TOKEN_TRUE, // "true"
     TOKEN_VOID, // "void"
     TOKEN_WHILE, // "while"
+    // Tokens about commenting will not be output.
+    TOKEN_DOUBLE_SLASH, // "//"
+    TOKEN_LDELIMITER, // "/*"
+    TOKEN_RDELIMITER, // "*/"
   }
 
   public Kind kind; // kind of the token
