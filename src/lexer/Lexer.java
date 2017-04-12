@@ -10,8 +10,8 @@ public class Lexer
 {
   String fname; // the input file name to be compiled
   InputStream fstream; // input stream for the above file
-  int curLineNum;
-  int curColNum;
+  Integer curLineNum;
+  Integer curColNum;
   int lDelimiterNum;
   boolean isAfterDoubleSlash;
 
@@ -20,7 +20,7 @@ public class Lexer
     this.fname = fname;
     this.fstream = fstream;
     curLineNum = 1;
-    curColNum = 1;
+    curColNum = 0;
     lDelimiterNum = 0;
     isAfterDoubleSlash = false;
   }
@@ -32,6 +32,7 @@ public class Lexer
       c = this.fstream.read();
     } while ('\n' != c);
     curLineNum++;
+    curColNum = 0;
     isAfterDoubleSlash = false;
   }
 
@@ -59,74 +60,81 @@ public class Lexer
   private Token nextTokenInternal() throws Exception
   {
     int c = this.fstream.read();
+    curColNum++;
+
     if (-1 == c)
       // The value for "lineNum" is now "null",
       // you should modify this to an appropriate
       // line number for the "EOF" token.
-      return new Token(Kind.TOKEN_EOF, curLineNum);
+      return new Token(Kind.TOKEN_EOF, curLineNum, curColNum);
 
     // skip all kinds of "blanks"
     while (' ' == c || '\t' == c || '\n' == c) {
-      if ('\n' == c)
+      if ('\n' == c) {
         curLineNum++;
+        curColNum = 0;
+      }
       c = this.fstream.read(); 
+      curColNum++;
+      // How to deal with \t ???
     }
     if (-1 == c)
-      return new Token(Kind.TOKEN_EOF, curLineNum);
+      return new Token(Kind.TOKEN_EOF, curLineNum, curColNum);
 
     switch (c) {
     case '+':
-      return new Token(Kind.TOKEN_ADD, curLineNum);
+      return new Token(Kind.TOKEN_ADD, curLineNum, curColNum);
     case '&':
       c = this.fstream.read();
       if ('&' == c)
-        return new Token(Kind.TOKEN_AND, curLineNum);
+        return new Token(Kind.TOKEN_AND, curLineNum, curColNum);
       else
         throw new Exception();
     case '=':
-      return new Token(Kind.TOKEN_ASSIGN, curLineNum);
+      return new Token(Kind.TOKEN_ASSIGN, curLineNum, curColNum);
     case ',':
-      return new Token(Kind.TOKEN_COMMER, curLineNum);
+      return new Token(Kind.TOKEN_COMMER, curLineNum, curColNum);
     case '.':
-      return new Token(Kind.TOKEN_DOT, curLineNum);
+      return new Token(Kind.TOKEN_DOT, curLineNum, curColNum);
     case '{':
-      return new Token(Kind.TOKEN_LBRACE, curLineNum);
+      return new Token(Kind.TOKEN_LBRACE, curLineNum, curColNum);
     case '[':
-      return new Token(Kind.TOKEN_LBRACK, curLineNum);
+      return new Token(Kind.TOKEN_LBRACK, curLineNum, curColNum);
     case '(':
-      return new Token(Kind.TOKEN_LPAREN, curLineNum);
+      return new Token(Kind.TOKEN_LPAREN, curLineNum, curColNum);
     case '<':
-      return new Token(Kind.TOKEN_LT, curLineNum);
+      return new Token(Kind.TOKEN_LT, curLineNum, curColNum);
     case '!':
-      return new Token(Kind.TOKEN_NOT, curLineNum);
+      return new Token(Kind.TOKEN_NOT, curLineNum, curColNum);
     case '}':
-      return new Token(Kind.TOKEN_RBRACE, curLineNum);
+      return new Token(Kind.TOKEN_RBRACE, curLineNum, curColNum);
     case ']':
-      return new Token(Kind.TOKEN_RBRACK, curLineNum);
+      return new Token(Kind.TOKEN_RBRACK, curLineNum, curColNum);
     case ')':
-      return new Token(Kind.TOKEN_RPAREN, curLineNum);
+      return new Token(Kind.TOKEN_RPAREN, curLineNum, curColNum);
     case ';':
-      return new Token(Kind.TOKEN_SEMI, curLineNum);
+      return new Token(Kind.TOKEN_SEMI, curLineNum, curColNum);
     case '-':
-      return new Token(Kind.TOKEN_SUB, curLineNum);
+      return new Token(Kind.TOKEN_SUB, curLineNum, curColNum);
     case '*':
       c = this.fstream.read();
       this.fstream.mark(1);
       if ('/' == c) {
-        return new Token(Kind.TOKEN_RDELIMITER, curLineNum);
+        return new Token(Kind.TOKEN_RDELIMITER, curLineNum, curColNum);
       } else {
         // roll back
         this.fstream.reset();
-        return new Token(Kind.TOKEN_TIMES, curLineNum);
+        return new Token(Kind.TOKEN_TIMES, curLineNum, curColNum);
       }
     case '/':
       c = this.fstream.read();
       if ('/' == c) {
-        return new Token(Kind.TOKEN_DOUBLE_SLASH, curLineNum);
+        return new Token(Kind.TOKEN_DOUBLE_SLASH, curLineNum, curColNum);
       } else if ('*' == c) {
-        return new Token(Kind.TOKEN_LDELIMITER, curLineNum);
+        return new Token(Kind.TOKEN_LDELIMITER, curLineNum, curColNum);
       } else {
-        throw new Exception("After '/' is " + (char)c + ", at line" + curLineNum);
+        throw new Exception("After '/' is " + (char)c 
+                + ", at line" + curLineNum + ", colum " + curColNum);
       }
     default:
       // Lab 1, exercise 2: supply missing code to
@@ -147,7 +155,7 @@ public class Lexer
         // rollback
         this.fstream.reset();
         if (sb.toString().matches("0|([1-9][0-9]*)")) {
-          return new Token(Kind.TOKEN_NUM, curLineNum, sb.toString());
+          return new Token(Kind.TOKEN_NUM, curLineNum, curColNum, sb.toString());
         } else {
           throw new Exception();
         }
@@ -162,49 +170,52 @@ public class Lexer
         // rollback
         this.fstream.reset();
         if (sb.toString().equals("boolean")) {
-          return new Token(Kind.TOKEN_BOOLEAN, curLineNum);
+          return new Token(Kind.TOKEN_BOOLEAN, curLineNum, curColNum);
         } else if (sb.toString().equals("class")) {
-          return new Token(Kind.TOKEN_CLASS, curLineNum);
+          return new Token(Kind.TOKEN_CLASS, curLineNum, curColNum);
         } else if (sb.toString().equals("else")) {
-          return new Token(Kind.TOKEN_ELSE, curLineNum);
+          return new Token(Kind.TOKEN_ELSE, curLineNum, curColNum);
         } else if (sb.toString().equals("extends")) {
-          return new Token(Kind.TOKEN_EXTENDS, curLineNum);
+          return new Token(Kind.TOKEN_EXTENDS, curLineNum, curColNum);
         } else if (sb.toString().equals("false")) {
-          return new Token(Kind.TOKEN_FALSE, curLineNum);
+          return new Token(Kind.TOKEN_FALSE, curLineNum, curColNum);
         } else if (sb.toString().equals("if")) {
-          return new Token(Kind.TOKEN_IF, curLineNum);
+          return new Token(Kind.TOKEN_IF, curLineNum, curColNum);
         } else if (sb.toString().equals("int")) {
-          return new Token(Kind.TOKEN_INT, curLineNum);
+          return new Token(Kind.TOKEN_INT, curLineNum, curColNum);
         } else if (sb.toString().equals("length")) {
-          return new Token(Kind.TOKEN_LENGTH, curLineNum);
+          return new Token(Kind.TOKEN_LENGTH, curLineNum, curColNum);
         } else if (sb.toString().equals("main")) {
-          return new Token(Kind.TOKEN_MAIN, curLineNum);
+          return new Token(Kind.TOKEN_MAIN, curLineNum, curColNum);
         } else if (sb.toString().equals("new")) {
-          return new Token(Kind.TOKEN_NEW, curLineNum);
+          return new Token(Kind.TOKEN_NEW, curLineNum, curColNum);
         } else if (sb.toString().equals("out")) {
-          return new Token(Kind.TOKEN_OUT, curLineNum);
+          return new Token(Kind.TOKEN_OUT, curLineNum, curColNum);
         } else if (sb.toString().equals("println")) {
-          return new Token(Kind.TOKEN_PRINTLN, curLineNum);
+          return new Token(Kind.TOKEN_PRINTLN, curLineNum, curColNum);
         } else if (sb.toString().equals("public")) {
-          return new Token(Kind.TOKEN_PUBLIC, curLineNum);
+          return new Token(Kind.TOKEN_PUBLIC, curLineNum, curColNum);
         } else if (sb.toString().equals("return")) {
-          return new Token(Kind.TOKEN_RETURN, curLineNum);
+          return new Token(Kind.TOKEN_RETURN, curLineNum, curColNum);
         } else if (sb.toString().equals("static")) {
-          return new Token(Kind.TOKEN_STATIC, curLineNum);
+          return new Token(Kind.TOKEN_STATIC, curLineNum, curColNum);
         } else if (sb.toString().equals("String")) {
-          return new Token(Kind.TOKEN_STRING, curLineNum);
+          return new Token(Kind.TOKEN_STRING, curLineNum, curColNum);
         } else if (sb.toString().equals("System")) {
-          return new Token(Kind.TOKEN_SYSTEM, curLineNum);
+          return new Token(Kind.TOKEN_SYSTEM, curLineNum, curColNum);
         } else if (sb.toString().equals("this")) {
-          return new Token(Kind.TOKEN_THIS, curLineNum);
+          return new Token(Kind.TOKEN_THIS, curLineNum, curColNum);
         } else if (sb.toString().equals("true")) {
-          return new Token(Kind.TOKEN_TRUE, curLineNum);
+          return new Token(Kind.TOKEN_TRUE, curLineNum, curColNum);
         } else if (sb.toString().equals("void")) {
-          return new Token(Kind.TOKEN_VOID, curLineNum);
+          return new Token(Kind.TOKEN_VOID, curLineNum, curColNum);
         } else if (sb.toString().equals("while")) {
-          return new Token(Kind.TOKEN_WHILE, curLineNum);
+          return new Token(Kind.TOKEN_WHILE, curLineNum, curColNum);
         } else {
-          return new Token(Kind.TOKEN_ID, curLineNum, sb.toString());
+          System.out.println("Colum = " + curColNum + " before new a token of id.");
+          Token token = new Token(Kind.TOKEN_ID, curLineNum, curColNum, sb.toString());
+          System.out.println("Colum = " + curColNum + " after new a token of id.");
+          return token;
         }
       } else {
         throw new Exception("Current character is \"" + (char)c

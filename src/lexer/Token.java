@@ -63,19 +63,91 @@ public class Token
   public Kind kind; // kind of the token
   public String lexeme; // extra lexeme for this token, if any
   public Integer lineNum; // on which line of the source file this token appears
+  public Integer colNum; // on which colum of the source file this token appears
 
   // Some tokens don't come with lexeme but 
   // others do.
-  public Token(Kind kind, Integer lineNum)
+  public Token(Kind kind, Integer lineNum, Integer colNum)
   {
     this.kind = kind;
     this.lineNum = lineNum;
+    this.colNum = colNum;
+ 
+    switch(kind) {
+    case TOKEN_ADD: // "+"
+    case TOKEN_ASSIGN: // "="
+    case TOKEN_COMMER: // ","
+    case TOKEN_DOT: // "."
+    case TOKEN_LBRACE: // "{"
+    case TOKEN_EOF: // EOF
+    case TOKEN_LBRACK: // "["
+    case TOKEN_LPAREN: // "("
+    case TOKEN_LT: // "<"
+    case TOKEN_NOT: // "!"
+    case TOKEN_RBRACE: // "}"
+    case TOKEN_RBRACK: // "]"
+    case TOKEN_RPAREN: // ")"
+    case TOKEN_SEMI: // ";"
+    case TOKEN_TIMES: // "*"
+    case TOKEN_SUB: // "-"
+      colNum = new Integer(colNum + 1);
+      break;
+    case TOKEN_AND: // "&&"
+    case TOKEN_DOUBLE_SLASH: // "//"
+    case TOKEN_LDELIMITER: // "/*"
+    case TOKEN_RDELIMITER: // "*/"
+    case TOKEN_IF: // "if"
+      colNum = new Integer(colNum + 2);
+      break;
+    case TOKEN_INT: // "int"
+    case TOKEN_NEW: // "new"
+    case TOKEN_OUT: // "out"
+      colNum = new Integer(colNum + 3);
+      break;
+    case TOKEN_ELSE: // "else"
+    case TOKEN_MAIN: // "main"
+    case TOKEN_THIS: // "this"
+    case TOKEN_TRUE: // "true"
+    case TOKEN_VOID: // "void"
+      colNum = new Integer(colNum + 4);
+      break;
+    case TOKEN_CLASS: // "class"
+    case TOKEN_FALSE: // "false"
+    case TOKEN_WHILE: // "while"
+      colNum = new Integer(colNum + 5);
+      break;
+    case TOKEN_LENGTH: // "length"
+    case TOKEN_PUBLIC: // "public"
+    case TOKEN_RETURN: // "return"
+    case TOKEN_STATIC: // "static"
+    case TOKEN_STRING: // "String"
+    case TOKEN_SYSTEM: // "System"
+      colNum = new Integer(colNum + 6);
+      break;
+    case TOKEN_BOOLEAN: // "boolean"
+    case TOKEN_EXTENDS: // "extends"
+    case TOKEN_PRINTLN: // "println"
+      colNum = new Integer(colNum + 7);
+      break;
+    case TOKEN_ID: // Identifier
+    case TOKEN_NUM: // IntegerLiteral
+    default:
+      break;
+    }
   }
 
-  public Token(Kind kind, Integer lineNum, String lexeme)
+  public Token(Kind kind, Integer lineNum, Integer colNum, String lexeme)
   {
-    this(kind, lineNum);
+    this(kind, lineNum, colNum);
     this.lexeme = lexeme;
+    switch(kind) {
+    case TOKEN_ID: // Identifier
+    case TOKEN_NUM: // IntegerLiteral
+      colNum = new Integer(colNum + lexeme.length());
+      break;
+    default:
+      break;
+    }
   }
 
   @Override
@@ -84,11 +156,11 @@ public class Token
     String s;
 
     // to check that the "lineNum" field has been properly set.
-    if (this.lineNum == null)
+    if (this.lineNum == null || this.colNum == null)
       new util.Todo();
 
     s = ": " + ((this.lexeme == null) ? "<NONE>" : this.lexeme) + " : at line "
-        + this.lineNum.toString();
+        + this.lineNum.toString() + ", colum " + this.colNum.toString();
     return this.kind.toString() + s;
   }
 }
