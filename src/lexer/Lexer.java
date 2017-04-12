@@ -237,10 +237,8 @@ public class Lexer
 
     if (Kind.TOKEN_LDELIMITER == t.kind) {
       lDelimiterNum++;
-      System.out.println("Current left delimiter number = " + lDelimiterNum);
     } else if (Kind.TOKEN_RDELIMITER == t.kind) {
       lDelimiterNum--;
-      System.out.println("Current left delimiter number = " + lDelimiterNum);
     } else if (Kind.TOKEN_DOUBLE_SLASH == t.kind) {
       isAfterDoubleSlash = true;
     }
