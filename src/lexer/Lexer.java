@@ -11,6 +11,7 @@ public class Lexer
   String fname; // the input file name to be compiled
   InputStream fstream; // input stream for the above file
   int curLineNum;
+  int curColNum;
   int lDelimiterNum;
   boolean isAfterDoubleSlash;
 
@@ -19,6 +20,7 @@ public class Lexer
     this.fname = fname;
     this.fstream = fstream;
     curLineNum = 1;
+    curColNum = 1;
     lDelimiterNum = 0;
     isAfterDoubleSlash = false;
   }
@@ -235,12 +237,16 @@ public class Lexer
       }
     }
 
+    // Depress the output of double slash and delimiter.
     if (Kind.TOKEN_LDELIMITER == t.kind) {
       lDelimiterNum++;
+      return nextToken();
     } else if (Kind.TOKEN_RDELIMITER == t.kind) {
       lDelimiterNum--;
+      return nextToken();
     } else if (Kind.TOKEN_DOUBLE_SLASH == t.kind) {
       isAfterDoubleSlash = true;
+      return nextToken();
     }
 
     if (dump)
