@@ -59,6 +59,7 @@ public class Lexer
   // Return TOKEN_EOF when reaching the end of the input stream.
   private Token nextTokenInternal() throws Exception
   {
+    Token token;
     int c = this.fstream.read();
     curColNum++;
 
@@ -83,55 +84,80 @@ public class Lexer
 
     switch (c) {
     case '+':
-      return new Token(Kind.TOKEN_ADD, curLineNum, curColNum);
+      token = new Token(Kind.TOKEN_ADD, curLineNum, curColNum);
+      return token;
     case '&':
       c = this.fstream.read();
-      if ('&' == c)
-        return new Token(Kind.TOKEN_AND, curLineNum, curColNum);
-      else
+      if ('&' == c) {
+        token = new Token(Kind.TOKEN_AND, curLineNum, curColNum);
+        curColNum += 1;
+        return token;
+      } else {
+        curColNum++;
         throw new Exception();
+      }
     case '=':
-      return new Token(Kind.TOKEN_ASSIGN, curLineNum, curColNum);
+      token = new Token(Kind.TOKEN_ASSIGN, curLineNum, curColNum);
+      return token;
     case ',':
-      return new Token(Kind.TOKEN_COMMER, curLineNum, curColNum);
+      token = new Token(Kind.TOKEN_COMMER, curLineNum, curColNum);
+      return token;
     case '.':
-      return new Token(Kind.TOKEN_DOT, curLineNum, curColNum);
+      token = new Token(Kind.TOKEN_DOT, curLineNum, curColNum);
+      return token;
     case '{':
-      return new Token(Kind.TOKEN_LBRACE, curLineNum, curColNum);
+      token = new Token(Kind.TOKEN_LBRACE, curLineNum, curColNum);
+      return token;
     case '[':
-      return new Token(Kind.TOKEN_LBRACK, curLineNum, curColNum);
+      token = new Token(Kind.TOKEN_LBRACK, curLineNum, curColNum);
+      return token;
     case '(':
-      return new Token(Kind.TOKEN_LPAREN, curLineNum, curColNum);
+      token = new Token(Kind.TOKEN_LPAREN, curLineNum, curColNum);
+      return token;
     case '<':
-      return new Token(Kind.TOKEN_LT, curLineNum, curColNum);
+      token = new Token(Kind.TOKEN_LT, curLineNum, curColNum);
+      return token;
     case '!':
-      return new Token(Kind.TOKEN_NOT, curLineNum, curColNum);
+      token = new Token(Kind.TOKEN_NOT, curLineNum, curColNum);
+      return token;
     case '}':
-      return new Token(Kind.TOKEN_RBRACE, curLineNum, curColNum);
+      token = new Token(Kind.TOKEN_RBRACE, curLineNum, curColNum);
+      return token;
     case ']':
-      return new Token(Kind.TOKEN_RBRACK, curLineNum, curColNum);
+      token = new Token(Kind.TOKEN_RBRACK, curLineNum, curColNum);
+      return token;
     case ')':
-      return new Token(Kind.TOKEN_RPAREN, curLineNum, curColNum);
+      token = new Token(Kind.TOKEN_RPAREN, curLineNum, curColNum);
+      return token;
     case ';':
-      return new Token(Kind.TOKEN_SEMI, curLineNum, curColNum);
+      token = new Token(Kind.TOKEN_SEMI, curLineNum, curColNum);
+      return token;
     case '-':
-      return new Token(Kind.TOKEN_SUB, curLineNum, curColNum);
+      token = new Token(Kind.TOKEN_SUB, curLineNum, curColNum);
+      return token;
     case '*':
       c = this.fstream.read();
       this.fstream.mark(1);
       if ('/' == c) {
-        return new Token(Kind.TOKEN_RDELIMITER, curLineNum, curColNum);
+        token = new Token(Kind.TOKEN_RDELIMITER, curLineNum, curColNum);
+        curColNum += 1;
+        return token;
       } else {
         // roll back
         this.fstream.reset();
-        return new Token(Kind.TOKEN_TIMES, curLineNum, curColNum);
+        token = new Token(Kind.TOKEN_TIMES, curLineNum, curColNum);
+        return token;
       }
     case '/':
       c = this.fstream.read();
       if ('/' == c) {
-        return new Token(Kind.TOKEN_DOUBLE_SLASH, curLineNum, curColNum);
+        token = new Token(Kind.TOKEN_DOUBLE_SLASH, curLineNum, curColNum);
+        curColNum += 1;
+        return token;
       } else if ('*' == c) {
-        return new Token(Kind.TOKEN_LDELIMITER, curLineNum, curColNum);
+        token = new Token(Kind.TOKEN_LDELIMITER, curLineNum, curColNum);
+        curColNum += 1;
+        return token;
       } else {
         throw new Exception("After '/' is " + (char)c 
                 + ", at line" + curLineNum + ", colum " + curColNum);
@@ -155,8 +181,11 @@ public class Lexer
         // rollback
         this.fstream.reset();
         if (sb.toString().matches("0|([1-9][0-9]*)")) {
-          return new Token(Kind.TOKEN_NUM, curLineNum, curColNum, sb.toString());
+          token = new Token(Kind.TOKEN_NUM, curLineNum, curColNum, sb.toString());
+          curColNum += sb.toString().length() - 1;
+          return token;
         } else {
+          curColNum += sb.toString().length() - 1;
           throw new Exception();
         }
       } else if (Character.isJavaIdentifierStart(c)) {
@@ -170,51 +199,92 @@ public class Lexer
         // rollback
         this.fstream.reset();
         if (sb.toString().equals("boolean")) {
-          return new Token(Kind.TOKEN_BOOLEAN, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_BOOLEAN, curLineNum, curColNum);
+          curColNum += 6;
+          return token;
         } else if (sb.toString().equals("class")) {
-          return new Token(Kind.TOKEN_CLASS, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_CLASS, curLineNum, curColNum);
+          curColNum += 4;
+          return token;
         } else if (sb.toString().equals("else")) {
-          return new Token(Kind.TOKEN_ELSE, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_ELSE, curLineNum, curColNum);
+          curColNum += 3;
+          return token;
         } else if (sb.toString().equals("extends")) {
-          return new Token(Kind.TOKEN_EXTENDS, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_EXTENDS, curLineNum, curColNum);
+          curColNum += 6;
+          return token;
         } else if (sb.toString().equals("false")) {
-          return new Token(Kind.TOKEN_FALSE, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_FALSE, curLineNum, curColNum);
+          curColNum += 4;
+          return token;
         } else if (sb.toString().equals("if")) {
-          return new Token(Kind.TOKEN_IF, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_IF, curLineNum, curColNum);
+          curColNum += 1;
+          return token;
         } else if (sb.toString().equals("int")) {
-          return new Token(Kind.TOKEN_INT, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_INT, curLineNum, curColNum);
+          curColNum += 3;
+          return token;
         } else if (sb.toString().equals("length")) {
-          return new Token(Kind.TOKEN_LENGTH, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_LENGTH, curLineNum, curColNum);
+          curColNum += 5;
+          return token;
         } else if (sb.toString().equals("main")) {
-          return new Token(Kind.TOKEN_MAIN, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_MAIN, curLineNum, curColNum);
+          curColNum += 3;
+          return token;
         } else if (sb.toString().equals("new")) {
-          return new Token(Kind.TOKEN_NEW, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_NEW, curLineNum, curColNum);
+          curColNum += 2;
+          return token;
         } else if (sb.toString().equals("out")) {
-          return new Token(Kind.TOKEN_OUT, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_OUT, curLineNum, curColNum);
+          curColNum += 2;
+          return token;
         } else if (sb.toString().equals("println")) {
-          return new Token(Kind.TOKEN_PRINTLN, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_PRINTLN, curLineNum, curColNum);
+          curColNum += 6;
+          return token;
         } else if (sb.toString().equals("public")) {
-          return new Token(Kind.TOKEN_PUBLIC, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_PUBLIC, curLineNum, curColNum);
+          curColNum += 5;
+          return token;
         } else if (sb.toString().equals("return")) {
-          return new Token(Kind.TOKEN_RETURN, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_RETURN, curLineNum, curColNum);
+          curColNum += 5;
+          return token;
         } else if (sb.toString().equals("static")) {
-          return new Token(Kind.TOKEN_STATIC, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_STATIC, curLineNum, curColNum);
+          curColNum += 5;
+          return token;
         } else if (sb.toString().equals("String")) {
-          return new Token(Kind.TOKEN_STRING, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_STRING, curLineNum, curColNum);
+          curColNum += 5;
+          return token;
         } else if (sb.toString().equals("System")) {
-          return new Token(Kind.TOKEN_SYSTEM, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_SYSTEM, curLineNum, curColNum);
+          curColNum += 5;
+          return token;
         } else if (sb.toString().equals("this")) {
-          return new Token(Kind.TOKEN_THIS, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_THIS, curLineNum, curColNum);
+          curColNum += 3;
+          return token;
         } else if (sb.toString().equals("true")) {
-          return new Token(Kind.TOKEN_TRUE, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_TRUE, curLineNum, curColNum);
+          curColNum += 3;
+          return token;
         } else if (sb.toString().equals("void")) {
-          return new Token(Kind.TOKEN_VOID, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_VOID, curLineNum, curColNum);
+          curColNum += 3;
+          return token;
         } else if (sb.toString().equals("while")) {
-          return new Token(Kind.TOKEN_WHILE, curLineNum, curColNum);
+          token = new Token(Kind.TOKEN_WHILE, curLineNum, curColNum);
+          curColNum += 4;
+          return token;
         } else {
-          System.out.println("Colum = " + curColNum + " before new a token of id.");
-          Token token = new Token(Kind.TOKEN_ID, curLineNum, curColNum, sb.toString());
-          System.out.println("Colum = " + curColNum + " after new a token of id.");
+          token = new Token(Kind.TOKEN_ID, curLineNum, curColNum, sb.toString());
+          curColNum += sb.toString().length() - 1;
           return token;
         }
       } else {
@@ -248,7 +318,7 @@ public class Lexer
       }
     }
 
-    // Depress the output of double slash and delimiter.
+    // Suppress the output of double slash and delimiter.
     if (Kind.TOKEN_LDELIMITER == t.kind) {
       lDelimiterNum++;
       return nextToken();
