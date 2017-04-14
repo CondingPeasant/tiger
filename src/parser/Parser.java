@@ -7,21 +7,30 @@ import lexer.Token.Kind;
 public class Parser
 {
   Lexer lexer;
-  Token current;
+  Token current, previous;
 
   public Parser(String fname, java.io.InputStream fstream)
   {
     lexer = new Lexer(fname, fstream);
     current = lexer.nextToken();
+    previous = null;
   }
 
   // /////////////////////////////////////////////
   // utility methods to connect the lexer
   // and the parser.
 
+  private void lookAhead()
+  {
+    previous = current;
+    current = lexer.nextToken();
+    //System.out.println("Look ahead\n" + current);
+  }
+
   private void advance()
   {
     current = lexer.nextToken();
+    //System.out.println(current);
   }
 
   private void eatToken(Kind kind)
@@ -216,6 +225,27 @@ public class Parser
   // -> id [ Exp ]= Exp ;
   private void parseStatement()
   {
+    //System.out.println("In parseStatement(), previous<" + (previous == null ? "null" : previous) 
+            //+ ">, current<" + current + ">");
+    if (previous != null && previous.kind == Kind.TOKEN_ID) {
+      if (current.kind == Kind.TOKEN_ASSIGN) {
+        eatToken(Kind.TOKEN_ASSIGN);
+        parseExp();
+        eatToken(Kind.TOKEN_SEMI);
+      } else if (current.kind == Kind.TOKEN_LBRACK) {
+        eatToken(Kind.TOKEN_LBRACK);
+        parseExp();
+        eatToken(Kind.TOKEN_RBRACK);
+        eatToken(Kind.TOKEN_ASSIGN);
+        parseExp();
+        eatToken(Kind.TOKEN_SEMI);
+      } else {
+        error();
+      }
+      previous = null;
+      return;
+    }
+
     switch(current.kind) {
       case TOKEN_LBRACE:
         eatToken(Kind.TOKEN_LBRACE);
@@ -282,8 +312,20 @@ public class Parser
   {
     while (current.kind == Kind.TOKEN_LBRACE || current.kind == Kind.TOKEN_IF
         || current.kind == Kind.TOKEN_WHILE
-        || current.kind == Kind.TOKEN_SYSTEM || current.kind == Kind.TOKEN_ID) {
-      parseStatement();
+        || current.kind == Kind.TOKEN_SYSTEM
+        || current.kind == Kind.TOKEN_ID || (previous != null && previous.kind == Kind.TOKEN_ID)) {
+      if (current.kind == Kind.TOKEN_ID) {
+        lookAhead();
+        if (current.kind == Kind.TOKEN_ID) {
+          parseVarDecls();
+        } else if (current.kind == Kind.TOKEN_ASSIGN || current.kind == Kind.TOKEN_LBRACK) {
+          parseStatement();
+        } else {
+          error();
+        }
+      } else {
+        parseStatement();
+      }
     }
     return;
   }
@@ -291,19 +333,23 @@ public class Parser
   // Type -> int []
   // -> boolean
   // -> int
-  // -> id ???
+  // -> id
   private void parseType()
   {
+    //System.out.println("In parseType(), previous<" + (previous == null ? "null" : previous) 
+            //+ ">, current<" + current + ">");
+    if (previous != null && previous.kind == Kind.TOKEN_ID) {
+      previous = null;
+      return;
+    }
+
     switch(current.kind) {
     case TOKEN_BOOLEAN:
       eatToken(Kind.TOKEN_BOOLEAN);
       return;
-    /*
     case TOKEN_ID:
-      System.out.println("eat token id in parseType");
       eatToken(Kind.TOKEN_ID);
       return;
-    */
     case TOKEN_INT:
       eatToken(Kind.TOKEN_INT);
       if (current.kind == Kind.TOKEN_LBRACK) {
@@ -323,7 +369,6 @@ public class Parser
     // to parse the "Type" nonterminal in this method, instead of writing
     // a fresh one.
     parseType();
-    System.out.println("eat token id in parseVarDecl");
     eatToken(Kind.TOKEN_ID);
     eatToken(Kind.TOKEN_SEMI);
     return;
@@ -333,9 +378,20 @@ public class Parser
   // ->
   private void parseVarDecls()
   {
-    while (current.kind == Kind.TOKEN_INT || current.kind == Kind.TOKEN_BOOLEAN
-        /*|| current.kind == Kind.TOKEN_ID*/) {
-      parseVarDecl();
+    while (current.kind == Kind.TOKEN_INT || current.kind == Kind.TOKEN_BOOLEAN ||
+        current.kind == Kind.TOKEN_ID || (previous != null && previous.kind == Kind.TOKEN_ID)) {
+      if (current.kind == Kind.TOKEN_ID) {
+        lookAhead();
+        if (current.kind == Kind.TOKEN_ID) {
+          parseVarDecl();
+        } else if (current.kind == Kind.TOKEN_ASSIGN) {
+          parseStatements();
+        } else {
+          error();
+        }
+      } else {
+        parseVarDecl();
+      }
     }
     return;
   }
